@@ -1,0 +1,177 @@
+// %%%%%%%%%%%%% CONFIGS %%%%%%%%%%%%
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// %%%%%%%%%%%%% END - CONFIGS %%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%% ENUMS %%%%%%%%%%%%%
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  MICROSOFT
+}
+
+// %%%%%%%%%%%%%%%% END - ENUMS %%%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%% USER MODEL %%%%%%%%%%%%%
+model User {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String   @unique
+  stand_by_email        String?
+  username              String
+  image                 String?
+  password              String?
+  role                  UserRole @default(USER)
+  is_actif              Boolean  @default(true)
+  access_token          String?  @unique
+  connected_service_ids String[] @default([])
+  connectors            Json?
+
+  wishListMovies Movie[]  @relation("UserWishList", fields: [wishList], references: [id])
+  wishList       String[] @db.ObjectId
+
+  provider      AuthProvider @default(LOCAL)
+  provider_id   String?
+  oauth_token   String?
+  refresh_token String?
+
+  history String[] @default([])
+
+  verified    Boolean   @default(false)
+  verified_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  comments Comment[] @relation("UserComments")
+
+  @@map("users")
+}
+
+// %%%%%%%%%%%%%%%% END - USER MODEL %%%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%%%%%% PERSON MODEL %%%%%%%%%%%%%
+model Person {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  tmdb_id      Int
+  name         String
+  profile_path String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("persons")
+}
+
+// %%%%%%%%%%%%%%%%%%%% END - PERSON MODEL %%%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%%%%%% GENRE MODEL %%%%%%%%%%%%%
+model Genre {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  tmdb_id Int    @unique
+  name    String
+
+  movies   Movie[]  @relation("MovieGenres", fields: [movieIds], references: [id])
+  movieIds String[] @db.ObjectId
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("genres")
+}
+
+// %%%%%%%%%%%%%%%%%%%% END - GENRE MODEL %%%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%%%%%% MOVIE MODEL %%%%%%%%%%%%%
+model Movie {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  tmdb_id Int
+
+  title         String
+  overview      String?
+  poster_path   String?
+  backdrop_path String?
+  release_date  String?
+  runtime       Int?
+
+  vote_average Float?
+  vote_count   Int?
+  popularity   Float?
+
+  // Ratings by user: { "user_id": rating_value }
+  rates Json? @default("{}")
+
+  // Cast: [{person_id: "123", character: "Neo"}]
+  cast Json?
+
+  // Director person_id
+  director_id String?
+
+  genres   Genre[]  @relation("MovieGenres", fields: [genreIds], references: [id])
+  genreIds String[] @db.ObjectId
+
+  video_key  String?
+  is_visible Boolean @default(true)
+
+  comments Comment[]
+
+  inWishListOf    User[]   @relation("UserWishList", fields: [wishListUserIds], references: [id])
+  wishListUserIds String[] @db.ObjectId
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("movies")
+}
+
+// %%%%%%%%%%%%%%%%%%%% END - MOVIE MODEL %%%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%%%%%% COMMENT MODEL %%%%%%%%%%%%%%%%
+model Comment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String
+  rating     Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relation utilisateur
+  user_id String @db.ObjectId
+  user    User   @relation("UserComments", fields: [user_id], references: [id])
+
+  // Relation film
+  movie_id String? @db.ObjectId
+  movie    Movie?  @relation(fields: [movie_id], references: [id])
+
+  // Relation hiérarchique (commentaire parent/enfant)
+  parent_id String?   @db.ObjectId
+  parent    Comment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+// %%%%%%%%%%%%%%%%%%%% END - COMMENT MODEL %%%%%%%%%%%%%%%%
+
+// %%%%%%%%%%%%%%%%%%%% RATING MODEL %%%%%%%%%%%%%%%%
+model Rating {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  user_id_movie_id String @unique
+  user_id    String   @db.ObjectId
+  movie_id   String   @db.ObjectId
+  rating     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("ratings")
+}
+// %%%%%%%%%%%%%%%%%%%% END - RATING MODEL %%%%%%%%%%%%%%%%

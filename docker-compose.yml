@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Next.js Application (using MongoDB Atlas)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cineverse-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # MongoDB Atlas connection
+      DATABASE_URL: ${DATABASE_URL}
+      
+      # NextAuth
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      
+      # OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_SECRET_ID: ${GOOGLE_SECRET_ID}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      
+      # TMDB API
+      TMDB_API_READ_ACCESS_TOKEN: ${TMDB_API_READ_ACCESS_TOKEN}
+      NEXT_PUBLIC_TMDB_API_KEY: ${NEXT_PUBLIC_TMDB_API_KEY}
+      NEXT_PUBLIC_TMDB_BASE_URL: ${NEXT_PUBLIC_TMDB_BASE_URL}
+      NEXT_PUBLIC_TMDB_IMAGE_BASE_URL: ${NEXT_PUBLIC_TMDB_IMAGE_BASE_URL}
+      NEXT_READ_TMDB_API_KEY: ${NEXT_READ_TMDB_API_KEY}
+      
+      # Email Service (Gmail)
+      GMAIL_USER: ${GMAIL_USER}
+      GMAIL_PASSWORD: ${GMAIL_PASSWORD}
+      
+      # Application
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+      NODE_ENV: production
+    networks:
+      - cineverse-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  cineverse-network:
+    driver: bridge

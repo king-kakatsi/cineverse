@@ -1,0 +1,57 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js
+.next
+out
+
+# Production
+build
+dist
+
+# Environment files
+.env
+.env*.local
+.env.docker
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+docs
+
+# Testing
+coverage
+.nyc_output
+__tests__
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Misc
+.prettierrc
+.eslintrc.json
+.editorconfig
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
