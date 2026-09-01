@@ -1,6 +1,37 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+/**
+ * Fetch aggregated ratings for an array of movie IDs from the Rating model.
+ * Returns a map: { movieId: { average: number, count: number } }
+ */
+async function getAggregatedRatings(movieIds) {
+  if (!movieIds || movieIds.length === 0) return {};
+
+  const ratings = await prisma.rating.findMany({
+    where: { movie_id: { in: movieIds } },
+    select: { movie_id: true, rating: true }
+  });
+
+  const ratingsByMovie = {};
+  for (const singleRating of ratings) {
+    if (!ratingsByMovie[singleRating.movie_id]) {
+      ratingsByMovie[singleRating.movie_id] = { sum: 0, count: 0 };
+    }
+    ratingsByMovie[singleRating.movie_id].sum += singleRating.rating;
+    ratingsByMovie[singleRating.movie_id].count += 1;
+  }
+
+  const result = {};
+  for (const [movieId, data] of Object.entries(ratingsByMovie)) {
+    result[movieId] = {
+      average: parseFloat((data.sum / data.count).toFixed(1)),
+      count: data.count
+    };
+  }
+  return result;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -75,8 +106,8 @@ export async function GET(request) {
 
     const directorIds = [...new Set(
       movies
-        .filter(m => m.director_id)
-        .map(m => m.director_id)
+        .filter((movie) => movie.director_id)
+        .map((movie) => movie.director_id)
     )];
 
     const directors = directorIds.length > 0 
@@ -94,15 +125,24 @@ export async function GET(request) {
       : [];
 
     const directorMap = new Map(
-      directors.map(d => [d.id, d])
+      directors.map((director) => [director.id, director])
     );
 
-    const enrichedMovies = movies.map(movie => ({
-      ...movie,
-      director: movie.director_id 
-        ? directorMap.get(movie.director_id) || null
-        : null
-    }));
+    // Fetch aggregated ratings from Rating model for all movies in this page
+    const allMovieIds = movies.map((movie) => movie.id);
+    const ratingsMap = await getAggregatedRatings(allMovieIds);
+
+    const enrichedMovies = movies.map(movie => {
+      const ratingData = ratingsMap[movie.id];
+      return {
+        ...movie,
+        director: movie.director_id 
+          ? directorMap.get(movie.director_id) || null
+          : null,
+        userRatingsAvg: ratingData ? ratingData.average : null,
+        userRatingsCount: ratingData ? ratingData.count : 0
+      };
+    });
 
     return NextResponse.json({
       success: true,

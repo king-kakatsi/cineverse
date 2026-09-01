@@ -1,3 +1,9 @@
+/**
+ * @deprecated This endpoint writes to the movie.rates JSON field which is deprecated.
+ * Use POST /api/ratings instead, which writes to the Rating model.
+ *
+ * This file is kept for backward compatibility only. New code should use /api/ratings.
+ */
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -37,10 +43,22 @@ export async function POST(request) {
       [user_id]: rating
     };
 
-    const updatedMovie = await prisma.movie.update({
+    await prisma.movie.update({
       where: { id: movie_id },
       data: { rates: updatedRates }
     });
+
+    // DEPRECATED: Also upsert into Rating model for forward compatibility
+    try {
+      const uniqueKey = `${user_id}_${movie_id}`;
+      await prisma.rating.upsert({
+        where: { user_id_movie_id: uniqueKey },
+        update: { rating: parseInt(rating), updated_at: new Date() },
+        create: { user_id, movie_id, user_id_movie_id: uniqueKey, rating: parseInt(rating) }
+      });
+    } catch (ratingSyncError) {
+      console.warn('Failed to sync rating to Rating model:', ratingSyncError.message);
+    }
 
     return NextResponse.json({
       success: true,
@@ -53,7 +71,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Error submitting rating:', error);
+    console.error('Error submitting rating (deprecated endpoint):', error);
     return NextResponse.json(
       { success: false, error: 'Failed to submit rating' },
       { status: 500 }
@@ -105,7 +123,7 @@ export async function GET(request) {
     });
 
   } catch (error) {
-    console.error('Error fetching rating:', error);
+    console.error('Error fetching rating (deprecated endpoint):', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch rating' },
       { status: 500 }

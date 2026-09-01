@@ -23,8 +23,13 @@ export default function MovieRating({
           currentUser.id
         );
 
-        if (success && data.data.rating) {
-          onRatingChange(data.data.rating);
+        if (success && data) {
+          const existingRating = data.data?.rating
+            ?? (data.ratings?.length > 0 ? data.ratings[0].rating : null);
+
+          if (existingRating) {
+            onRatingChange(existingRating);
+          }
         }
       } catch (error) {
         console.error("Error fetching rating:", error);
@@ -74,8 +79,8 @@ export default function MovieRating({
     }
   };
 
-  const selectRating = (rating) => {
-    onRatingChange(rating);
+  const handleSelectRating = (selectedRating) => {
+    onRatingChange(selectedRating);
   };
 
   if (loading) {
@@ -100,21 +105,21 @@ export default function MovieRating({
               Rate this film
             </label>
             <div className="flex gap-3">
-              {[1, 2, 3, 4, 5].map((rating) => (
+              {[1, 2, 3, 4, 5].map((ratingValue) => (
                 <button
-                  key={rating}
-                  onClick={() => selectRating(rating)}
-                  onMouseEnter={() => setHoveredRating(rating)}
+                  key={ratingValue}
+                  onClick={() => handleSelectRating(ratingValue)}
+                  onMouseEnter={() => setHoveredRating(ratingValue)}
                   onMouseLeave={() => setHoveredRating(0)}
                   disabled={submitting}
                   className={`text-2xl md:text-5xl transition-all hover:scale-110 ${
-                    hoveredRating >= rating || userRating >= rating
+                    hoveredRating >= ratingValue || userRating >= ratingValue
                       ? "opacity-100 scale-105"
                       : "opacity-80 grayscale"
                   } ${submitting ? "cursor-not-allowed" : "cursor-pointer"}`}
-                  title={`Rate ${rating}/5 - ${RATING_EMOJIS[rating].label}`}
+                  title={`Rate ${ratingValue}/5 - ${RATING_EMOJIS[ratingValue].label}`}
                 >
-                  {RATING_EMOJIS[rating].emoji}
+                  {RATING_EMOJIS[ratingValue].emoji}
                 </button>
               ))}
             </div>

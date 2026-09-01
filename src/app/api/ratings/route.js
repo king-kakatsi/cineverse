@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-
+/**
+ * POST /api/ratings
+ * Create or update (upsert) a user's rating for a movie.
+ * Uses the Rating model with a unique compound key (user_id_movie_id).
+ *
+ * @param {Request} request - Incoming request with { movie_id, user_id, rating }
+ * @returns {NextResponse} - JSON response with success status
+ */
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -29,9 +35,9 @@ export async function POST(request) {
       );
     }
 
-    // Utiliser Prisma pour upsert la note
+    // Upsert rating: create if not exists, update if exists
     const user_id_movie_id = `${user_id}_${movie_id}`;
-    const result = await prisma.rating.upsert({
+    await prisma.rating.upsert({
       where: { user_id_movie_id },
       update: {
         rating: parseInt(rating),
@@ -49,16 +55,16 @@ export async function POST(request) {
       { 
         success: true, 
         message: "Rating submitted successfully",
-        rating: rating 
+        rating: parseInt(rating)
       },
       { status: 200 }
     );
 
   } catch (error) {
-    console.error(" Rating error:", error);
+    console.error("Rating submission error:", error);
     return NextResponse.json(
       { 
-        success: false, 
+        success: false,
         error: "Failed to submit rating" 
       },
       { status: 500 }
@@ -66,19 +72,29 @@ export async function POST(request) {
   }
 }
 
-// Optionnel: GET pour récupérer les ratings
+/**
+ * GET /api/ratings
+ * Fetch ratings filtered by movie_id and/or user_id.
+ *
+ * Query params:
+ *   - movie_id: Filter by movie
+ *   - user_id: Filter by user
+ *
+ * @param {Request} request - Incoming request
+ * @returns {NextResponse} - JSON response with ratings array
+ */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const movie_id = searchParams.get('movie_id');
     const user_id = searchParams.get('user_id');
 
-    let where = {};
-    if (movie_id) where.movie_id = movie_id;
-    if (user_id) where.user_id = user_id;
+    let whereClause = {};
+    if (movie_id) whereClause.movie_id = movie_id;
+    if (user_id) whereClause.user_id = user_id;
 
     const ratings = await prisma.rating.findMany({
-      where,
+      where: whereClause,
       orderBy: {
         created_at: 'desc'
       }

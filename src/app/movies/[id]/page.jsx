@@ -81,6 +81,8 @@ export default function MovieDetailPage() {
   }
 
   const reviews = movie.comments || [];
+  // movieRate() now reads from movie.userRatingsAvg/userRatingsCount (Rating model)
+  // with fallback to movie.rates (legacy JSON) for backward compatibility
   const avgRating = movieRate(movie);
 
   return (

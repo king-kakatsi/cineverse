@@ -62,6 +62,25 @@ export async function GET(request, { params }) {
       }));
     }
 
+    // Fetch ratings from Rating model
+    const ratings = await prisma.rating.findMany({
+      where: { movie_id: id },
+      select: { user_id: true, rating: true }
+    });
+
+    if (ratings.length > 0) {
+      const sumOfRatings = ratings.reduce(
+        (total, singleRating) => total + singleRating.rating, 0
+      );
+      movie.userRatingsAvg = parseFloat((sumOfRatings / ratings.length).toFixed(1));
+      movie.userRatingsCount = ratings.length;
+      movie.userRatings = ratings;
+    } else {
+      movie.userRatingsAvg = null;
+      movie.userRatingsCount = 0;
+      movie.userRatings = [];
+    }
+
     return NextResponse.json({
       success: true,
       data: movie
