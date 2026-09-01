@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { requireAdminUser } from "@/lib/auth";
 
-const prisma = new PrismaClient();
-
-export async function GET() {
+export async function GET(request) {
   try {
-    // Récupération de tous les utilisateurs
+    await requireAdminUser(request);
+
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -27,12 +27,11 @@ export async function GET() {
       data: users,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des utilisateurs :", error);
+    const message = error.message || "Failed to fetch users";
+    const status = message === "Unauthorized" ? 401 : message === "Forbidden" ? 403 : 500;
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to fetch users" },
-      { status: 500 }
+      { success: false, message },
+      { status }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

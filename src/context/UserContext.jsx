@@ -53,7 +53,7 @@ export function UserProvider({ children }) {
     const logout = useCallback(() => {
         setCurrentUser(null);
         setAccessToken('');
-        // Optionnel: Supprimer aussi du localStorage
+        // Optional: also delete from localStorage
     }, []);
     // %%%%%%%%%%%%%% END - LOGOUT %%%%%%%%%%%%%%
 

@@ -31,11 +31,9 @@ export default function MoviesList() {
 
   function handleWishlistToggle(movieId, isAdded) {
     if (isAdded) {
-      console.log("DEBUG - added", wishlistIds);
       setWishlistIds((prev) => [...prev, movieId]);
     } else {
       setWishlistIds((prev) => prev.filter((id) => id !== movieId));
-      console.log("DEBUG - removed", wishlistIds);
     }
   }
 

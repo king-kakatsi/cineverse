@@ -224,7 +224,6 @@ export default function MovieComments({
       }
 
       const newComment = await response.json();
-      console.log("Comment created:", newComment);
 
       setNewCommentContent("");
       

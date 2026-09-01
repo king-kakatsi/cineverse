@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(req) {
     try {
@@ -16,7 +14,7 @@ export async function GET(req) {
             );
         }
 
-        // Récupérer d'abord les commentaires avec leurs auteurs et réponses
+        // Fetch comments with their authors and replies
         const comments = await prisma.comment.findMany({
             where: { movie_id: movieId },
             include: {
@@ -29,13 +27,13 @@ export async function GET(req) {
             orderBy: { created_at: 'desc' }
         });
 
-        // Récupérer les ratings séparément (sans include pour éviter les erreurs de relation)
+        // Fetch ratings separately (without include to avoid relation errors)
         const ratings = await prisma.rating.findMany({
             where: { movie_id: movieId },
             orderBy: { created_at: 'desc' }
         });
 
-        // Récupérer les utilisateurs concernés par les ratings (batch)
+        // Fetch users related to ratings (batch)
         const ratingUserIds = Array.from(new Set(ratings.map(r => r.user_id))).filter(Boolean);
         let usersById = {};
         if (ratingUserIds.length > 0) {
@@ -46,7 +44,7 @@ export async function GET(req) {
             usersById = users.reduce((acc, u) => { acc[u.id] = u; return acc; }, {});
         }
 
-        // Attacher les ratings aux commentaires et aux replies
+        // Attach ratings to comments and replies
         const commentsWithRatings = comments.map(comment => {
             const commentRating = ratings.find(r => r.user_id === comment.user_id);
             const repliesWithRatings = (comment.replies || []).map(reply => {
@@ -56,7 +54,7 @@ export async function GET(req) {
             return { ...comment, userRating: commentRating ? commentRating.rating : null, replies: repliesWithRatings };
         });
 
-        // Construire les ratings standalone (utilisateurs qui ont noté sans commenter)
+        // Build standalone ratings (users who rated without commenting)
         const commentsUserIds = new Set(comments.map(c => c.user_id));
         const standAloneRatings = ratings
             .filter(r => !commentsUserIds.has(r.user_id))
@@ -74,16 +72,8 @@ export async function GET(req) {
                 isStandAloneRating: true
             }));
 
-        // Fusionner et trier par date
+        // Merge and sort by date
         const allContent = [...commentsWithRatings, ...standAloneRatings].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        // Debug: log un aperçu du payload retourné (3 premiers éléments)
-        try {
-            console.log('GET /comments - returning items count:', allContent.length);
-            console.log('GET /comments - sample items:', JSON.stringify(allContent.slice(0, 3), null, 2));
-        } catch (e) {
-            // ignore
-        }
 
         return NextResponse.json(allContent, { status: 200 });
 
@@ -107,7 +97,7 @@ export async function POST(req) {
             );
         }
 
-        // Vérifier que l'utilisateur existe
+        // Check if user exists
         const user = await prisma.user.findUnique({
             where: { id: user_id }
         });
@@ -130,7 +120,7 @@ export async function POST(req) {
             );
         }
 
-        // Vérifier le parent_id si fourni
+        // Validate parent_id if provided
         if (parent_id) {
             const parentComment = await prisma.comment.findUnique({
                 where: { id: parent_id }
@@ -144,7 +134,7 @@ export async function POST(req) {
             }
         }
 
-        // Créer le commentaire
+        // Create the comment
         const newComment = await prisma.comment.create({
             data: {
                 content: content.trim(),
@@ -175,7 +165,7 @@ export async function POST(req) {
     } catch (error) {
         console.error("POST /comments error:", error);
 
-        // Log plus détaillé pour les erreurs Prisma
+        // Detailed logging for Prisma errors
         if (error.code) {
             console.error("Prisma error code:", error.code);
             console.error("Prisma error meta:", error.meta);
@@ -200,7 +190,7 @@ export async function PUT(req) {
             );
         }
 
-        // Parse le body
+        // Parse the body
         let body;
         try {
             body = await req.json();
@@ -214,7 +204,7 @@ export async function PUT(req) {
 
         const { content, user_id } = body;
 
-        // Validation des champs requis
+        // Validate required fields
         if (!content || content.trim() === "") {
             return NextResponse.json(
                 { message: "Content is required" },
@@ -229,7 +219,7 @@ export async function PUT(req) {
             );
         }
 
-        // Récupérer le commentaire
+        // Fetch the comment
         const comment = await prisma.comment.findUnique({
             where: { id: commentId }
         });
@@ -241,7 +231,7 @@ export async function PUT(req) {
             );
         }
 
-        // Récupérer l'utilisateur qui fait la requête
+        // Fetch the user making the request
         const user = await prisma.user.findUnique({
             where: { id: user_id }
         });
@@ -253,17 +243,9 @@ export async function PUT(req) {
             );
         }
 
-        // Vérifier les permissions
+        // Check permissions (PUT)
         const isAuthor = comment.user_id === user_id;
         const isAdmin = user.role === "admin" || user.role === "ADMIN";
-
-        // console.log("Permission check:", {
-        //     commentUserId: comment.user_id,
-        //     currentUserId: user_id,
-        //     isAuthor,
-        //     isAdmin,
-        //     userRole: user.role
-        // });
 
         if (!isAuthor && !isAdmin) {
             return NextResponse.json({
@@ -271,7 +253,7 @@ export async function PUT(req) {
             }, { status: 403 });
         }
 
-        // Appliquer les modifications
+        // Apply changes
         const updatedComment = await prisma.comment.update({
             where: { id: commentId },
             data: {
@@ -308,7 +290,7 @@ export async function DELETE(req) {
         const { searchParams } = new URL(req.url);
         commentId = searchParams.get("id");
 
-        // Validation de l'ID
+        // Validate the ID
         if (!commentId || commentId === "undefined" || commentId === "null") {
             return NextResponse.json({ message: "Invalid comment ID" }, { status: 400 });
         }
@@ -318,7 +300,7 @@ export async function DELETE(req) {
             return NextResponse.json({ message: "Invalid comment ID format" }, { status: 400 });
         }
 
-        // Récupérer le body
+        // Fetch the body
         let body;
         try {
             body = await req.json();
@@ -353,7 +335,7 @@ export async function DELETE(req) {
             return NextResponse.json({ message: "User not found" }, { status: 404 });
         }
 
-        // Vérifier les permissions
+        // Check permissions (DELETE)
         const isAuthor = comment.user_id === user_id;
         const isAdmin = user.role === "admin" || user.role === "ADMIN";
 

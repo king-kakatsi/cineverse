@@ -57,7 +57,7 @@ async function updateUserRole(id, newRole) {
         }
       );
     }
-    const response = await updateWithApi(`users/updateRule/${id}`, newRole);
+    const response = await updateWithApi(`users/updateRole/${id}`, newRole);
     if (response[1].success) {
       return NextResponse.json(
         {
@@ -105,7 +105,6 @@ async function deleteUser(id) {
         }
       );
     }
-    console.log("service");
     const response = await deleteWithApi(`users/${id}`, {});
     return NextResponse.json(
       {
@@ -152,7 +151,6 @@ async function updateUser(email, username, role, is_actif, id) {
       role,
       is_actif,
     });
-    console.log(response);
     return NextResponse.json(
       { success: false, message: "User updated" },
       { status: 200 }

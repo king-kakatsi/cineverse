@@ -26,11 +26,9 @@ export default function WishlistPage() {
 
       if (success) {
         const data = dataSet.data;
-        console.log(' Wishlist loaded:', data); // DEBUG
         setMovies(data.movies || []);
         setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
       } else {
-        console.error(' Wishlist error:', data); // DEBUG
         setError(data.message || 'Failed to load wishlist');
       }
     } catch (err) {

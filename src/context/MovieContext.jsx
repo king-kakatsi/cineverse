@@ -37,17 +37,13 @@ export function MovieProvider({ children }) {
       const [success, dataSet] = await movieService.getMovies(filters);
       if (success) {
         const data = dataSet.data;
-        // console.log("DEBUG - movies", data, data.movies);
         setMovies(data.movies);
         setPagination(data.pagination);
         
         // Set best movie (highest rated)
-        // console.log('DEBUG - Set best movie (highest rated)')
         if (data.movies && data.movies.length > 0) {
-          // console.log('DEBUG - Set best movie (highest rated) - condition entered')
           const sorted = [...data.movies].sort((a, b) => b.vote_average - a.vote_average);
           setBestMovie(sorted[0]);
-          // console.log('DEBUG - stored in movies state', movies, bestMovie);
         }
       } else {
         setError(data.message);
@@ -56,7 +52,6 @@ export function MovieProvider({ children }) {
       setError(err.message);
     } finally {
       setLoading(false);
-      // console.log('DEBUG - loading ended', loading);
     }
   }
 

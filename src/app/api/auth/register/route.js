@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { postWithApi } from "../../../../services/axiosService";
-const prisma = new PrismaClient();
 
 /**
  * POST /api/auth/register
@@ -113,7 +112,5 @@ export async function POST(request) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

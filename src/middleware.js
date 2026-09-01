@@ -10,9 +10,6 @@ import jwt from 'jsonwebtoken';
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
   
-  // console.log('=== MIDDLEWARE START ===');
-  console.log('Path:', pathname);
-  
   // Get your custom JWT token from cookies or Authorization header
   let token = null;
   let decoded = null;

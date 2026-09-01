@@ -1,10 +1,8 @@
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 /**
- * Récupère l'utilisateur depuis le header Authorization: Bearer <token>
+ * Get user from Authorization header: Bearer <token>
  */
 export async function getUserFromToken(req) {
   const authHeader = req.headers.get("Authorization");
@@ -24,7 +22,7 @@ export async function getUserFromToken(req) {
 }
 
 /**
- * Vérifie qu'un utilisateur est connecté
+ * Check if a user is authenticated
  */
 export async function requireAuthUser(req) {
   const user = await getUserFromToken(req);
@@ -35,7 +33,7 @@ export async function requireAuthUser(req) {
 }
 
 /**
- * Vérifie qu'un utilisateur est connecté ET qu'il est admin
+ * Check if a user is authenticated and has ADMIN role
  */
 export async function requireAdminUser(req) {
   const user = await getUserFromToken(req);
@@ -43,7 +41,7 @@ export async function requireAdminUser(req) {
     throw new Error("Unauthorized");
   }
 
-  if (user.role !== "admin") {
+  if (user.role !== "ADMIN") {
     throw new Error("Forbidden");
   }
 

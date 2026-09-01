@@ -5,7 +5,6 @@ import { userService } from "@/services/userServices";
 import { oauthServices } from "@/services/oauthService";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchFromLocalStorage } from "@/services/localStorageService";
 
 //verify email fron frontend
 function isValidEmail(email) {
@@ -19,10 +18,6 @@ export default function RegisterPage() {
   const [emailError, setEmailError] = useState("");
   const [registration, setRegistration] = useState(false);
   const router = useRouter();
-  // const user = fetchFromLocalStorage("user");
-  // if (user) {
-  //   router.push("/");
-  // }
 
   async function handleSubmit(event) {
     setRegistration(true);

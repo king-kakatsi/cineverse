@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { userService } from "@/services/userServices";
 import { oauthServices } from "@/services/oauthService";
@@ -16,13 +16,6 @@ export default function LoginPage() {
   const [login, setLogin] = useState(false);
   const [error, setError] = useState("");
   const [oauthLogin, setOauthLogin] = useState(false);
-
-  // useEffect(() => {
-  //   const user = fetchFromLocalStorage("user");
-  //   if (user) {
-  //     router.push("/");
-  //   }
-  // }, [router]);
 
   async function handleSubmit(event) {
     setLogin(true);

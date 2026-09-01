@@ -64,7 +64,6 @@ export default function Profile() {
     fetchUser();
   }, []);
 
-  console.log(userReviews);
   const updateProfileInformations = async () => {
     setChangeInfos(true);
     if (fullName.trim().length == 0 || userEmail.trim().length == 0) {

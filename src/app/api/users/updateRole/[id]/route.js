@@ -1,26 +1,16 @@
-//import { requireAdminUser, requireAuthUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function PUT(request, { params }) {
   try {
-    //check if user is logged
-    // const user_infos = await requireAuthUser(request);
-    //check if logged'user is admin
-    //const checkAdmin = await requireAdminUser(request);
-    //get user id
     const { id } = await params;
-    //get user new rule
     const body = await request.json();
-    const newRule = body;
+    const newRole = body;
 
-    //get user
     const toChangeUser = await prisma.user.findUnique({
       where: { id },
     });
-    //check if user exist
+
     if (!toChangeUser) {
       return NextResponse.json(
         {
@@ -32,7 +22,7 @@ export async function PUT(request, { params }) {
         }
       );
     }
-    //check if user is actif
+
     if (!toChangeUser.is_actif) {
       return NextResponse.json(
         {
@@ -44,7 +34,7 @@ export async function PUT(request, { params }) {
         }
       );
     }
-    //check if user email is verified
+
     if (!toChangeUser.verified) {
       return NextResponse.json(
         {
@@ -56,15 +46,16 @@ export async function PUT(request, { params }) {
         }
       );
     }
-    //now change user rule
-    const rule = newRule == "admin" ? "ADMIN" : "USER";
-    const changeUser = await prisma.user.update({
+
+    const role = newRole === "admin" ? "ADMIN" : "USER";
+    await prisma.user.update({
       where: { id },
       data: {
-        role: rule,
+        role: role,
         updated_at: new Date(),
       },
     });
+
     return NextResponse.json(
       {
         success: true,

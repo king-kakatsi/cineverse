@@ -1,10 +1,8 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
 
 export const authOptions = {
   providers: [
@@ -101,7 +99,7 @@ export const authOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
